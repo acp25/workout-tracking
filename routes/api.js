@@ -1,54 +1,68 @@
-// Dependencies
-const express = require("express");
-const Workout = require("../models/Workout");
-const Router = express.Router();
+const router = require("express").Router();
+// const Transaction = require("../models/transaction.js");
 
-// GET route to return last workout
-Router.get("/api/workouts", (req, res) => {
-  Workout.find()
-  .sort({"day": -1})
-  .limit(1)
-  .then((workout) => {
-    res.json(workout);
-  }).catch((err) => {
-    res.json(err);
-  });;
+const db = require("../models");
+
+
+// getLastWorkout() - GET
+router.get("/api/workouts", (req, res) => {
+    console.log('getLastWorkout()');
+    console.log('get("/api/workouts"');
+    console.log('req.body: ', req.body);
+    db.Workout.find({})
+        .populate('exercises')
+        .then(dbWorkout => {
+            console.log('dbWorkout: ', dbWorkout);
+            res.json(dbWorkout);
+        })
+        .catch(err => {
+            res.json(err);
+        });
 });
 
-// POST route to create a workout
-Router.post("/api/workouts/", (req, res) => {
-  Workout.create(req.body).then((workout) => {
-    res.json(workout);
-  }).catch((err) => {
-    res.json(err);
-  });;
+// addExercise() - PUT
+router.put("/api/workouts/:id", ({ body }, res) => {
+    console.log('************************* addExercise() *************************');
+    console.log('body: ', body);
+    db.Exercise.create(body)
+        .then(({ _id }) => db.Workout.findOneAndUpdate({_id: req.params.id}, { $push: { exercises: _id } }, { new: true }))
+        .then(dbWorkout => {
+            console.log('dbWorkout: ', dbWorkout);
+            res.json(dbWorkout);
+        })
+        .catch(err => {
+            res.json(err);
+        });
 });
 
-// PUT route to add an exercise to a workout
-Router.put("/api/workouts/:id", (req, res) => {
-  const id = req.params.id;
-    Workout.findByIdAndUpdate(id, {
-      $push: {exercises: req.body}
-    })
-      .then((workout) => {
-        res.json(workout);
-      })
-      .catch((err) => {
-        res.json(err);
-      });
+// createWorkout() - POST
+router.post("/api/workouts", (req, res) => {
+    console.log('createWorkout()');
+    console.log('req.body: ', req.body);
+    db.Workout.create(req.body)
+        .then(dbWorkout => {
+            console.log('dbWorkout: ', dbWorkout);
+        })
+        .catch(({ message }) => {
+            console.log(message);
+        });
 });
 
-// GET route to return the last 7 workouts
-Router.get("/api/workouts/range", (req,res) => {
-  Workout.find({})
-  .sort({"day": -1})
-  .limit(7)
-  .then((workouts) => {
-    res.json(workouts);
-  }).catch((err) => {
-    res.json(err);
-  });
+// getWorkoutsInRange() - GET
+router.get("/api/workouts/range", (req, res) => {
+    console.log('getWorkoutsInRange()');
+    console.log('req.body: ', req.body);
+    db.Workout.find({})
+        .populate('exercises')
+        .then(dbWorkout => {
+            console.log('dbWorkout: ', dbWorkout);
+            res.json(dbWorkout);
+        })
+        .catch(err => {
+            res.json(err);
+        });
 });
 
-// Export
-module.exports = Router;
+
+
+module.exports = router;
