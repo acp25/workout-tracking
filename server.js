@@ -1,49 +1,28 @@
-// Dependencies
 const express = require("express");
 const mongoose = require("mongoose");
+const logger = require("morgan");
 
-// Express server port
 const PORT = process.env.PORT || 3000;
 
-// Express instance
 const app = express();
 
-// Middleware
+app.use(logger("dev"));
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
 app.use(express.static("public"));
 
-// MongoDB connection
 mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost/workout", {
   useNewUrlParser: true,
-  useUnifiedTopology: true,
-  useFindAndModify: false,
-  useCreateIndex: true,
+  useFindAndModify: false
 });
 
-// Debug connection issues
-const connection = mongoose.connection;
+// routes
+require("./routes/html-routes.js")(app);
+app.use(require("./routes/api-routes.js"));
 
-connection.on("connected", () => {
-  console.log("Mongoose successfully connected.");
+
+app.listen(PORT, () => {
+  console.log(`App running on port ${PORT}!`);
 });
-
-connection.on("error", (err) => {
-  console.log("Mongoose connection error: " + err);
-});
-
-// Use routes
-app.use(require("./routes/api.js"));
-app.use(require("./routes/views.js"));
-
-// Listen to ports
-if(process.env.PORT) {
-  app.listen(PORT, () => {
-    console.log(`Server is running on port: ${PORT}`);
-  });
-} else {
-  app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-  });
-  
-}
